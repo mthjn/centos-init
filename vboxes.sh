@@ -100,5 +100,32 @@ pause 'Fine [Enter]'
 echo "Конец фильма. Check ”/etc/httpd/conf/httpd.conf”."
 
 echo "IncludeOptional sites-enabled/*.conf" >> /etc/httpd/conf/httpd.conf
-pause 'Restart apache now. [Enter]'
+
+echo "Checking IPTABLES for general REJECT rules: "
+sudo cat /etc/sysconfig/iptables | grep 'REJECT'
+
+sudo "Checking opening lines of /etc/sysconfig/iptables to see if they recommend manual edits:"
+sudo head -2 /etc/sysconfig/iptables
+
+pause 'IMPORTANT: In the next step, file /etc/sysconfig/iptables will be rewritten. Kill the script now if you do not want that. [Enter / CTRL+C]'
+
+>/etc/sysconfig/iptables cat <<EOF
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+COMMIT
+EOF
+
+sudo cat /etc/sysconfig/iptables
+echo "Restarting IPTABLES..."
+sudo systemctl restart iptables
+
+pause 'All done. Restart apache now. [Enter]'
 sudo apachectl restart
