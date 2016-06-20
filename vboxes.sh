@@ -7,6 +7,8 @@
 #
 # =========================================== #
 
+set -euf -o pipefail
+
 DOM1="example.pw"
 DOM2="example.tech"
 
